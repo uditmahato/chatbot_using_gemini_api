@@ -4,53 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chatbot Interface</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f4f4f4;
-        }
-        .chat-container {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            width: auto;
-            text-align: center;
-        }
-        .chat-container input {
-            width: auto;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        .chat-container button {
-            padding: 10px 20px;
-            border: none;
-            background-color: #28a745;
-            color: white;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .chat-container .response {
-            margin-top: 20px;
-            padding: 10px;
-            background-color: #f8f9fa;
-            border-radius: 5px;
-            text-align: left;
-        }
-    </style>
+    <!-- Link to the external CSS file -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
 </head>
 <body>
+
+    <div class="navbar">
+        <span class="nav-title">Gem-Bot</span>
+    </div>
+ 
+
     <div class="chat-container">
         <h1>Chat with Bot</h1>
-        <input type="text" id="prompt" placeholder="Type your message here...">
-        <button onclick="sendMessage()">Send</button>
+        <div class="input_send">
+            <input type="text" id="prompt" placeholder="Type your message here...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+        
         <div class="response" id="response"></div>
     </div>
 
@@ -81,6 +52,8 @@
                 responseDiv.innerHTML += chunk;
             }
         }
+
+
     </script>
 </body>
 </html>
