@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, Response
 import google.generativeai as genai
 
 app = Flask(__name__)
@@ -19,9 +19,15 @@ def chat_with_bot(prompt):
     chat = model.start_chat(history=[])
     # Send the message and stream the response
     response = chat.send_message(prompt, stream=True)
-    # Collect and concatenate chunks of text from the response
-    response_text = ''.join(chunk.text for chunk in response if chunk.text)
-    return response_text
+    # Yield chunks of text from the response
+    for chunk in response:
+        if chunk.text:
+            words = chunk.text.split()
+            for word in words:
+                yield word + ' '
+        else:
+            yield ''
+    yield ''  # Ensure the client knows the response is complete
 
 @app.route('/')
 def index():
@@ -31,8 +37,7 @@ def index():
 def chat():
     data = request.get_json()
     prompt = data.get('prompt')
-    response = chat_with_bot(prompt)
-    return jsonify({'response': response})
+    return Response(chat_with_bot(prompt), content_type='text/plain')
 
 if __name__ == "__main__":
     app.run(debug=True)

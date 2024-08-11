@@ -19,11 +19,11 @@
             padding: 20px;
             border-radius: 5px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            width: 300px;
+            width: auto;
             text-align: center;
         }
         .chat-container input {
-            width: 100%;
+            width: auto;
             padding: 10px;
             margin: 10px 0;
             border: 1px solid #ccc;
@@ -58,6 +58,7 @@
         async function sendMessage() {
             const prompt = document.getElementById('prompt').value;
             const responseDiv = document.getElementById('response');
+            responseDiv.innerHTML = '';  // Clear previous responses
 
             const response = await fetch('/chat', {
                 method: 'POST',
@@ -67,8 +68,18 @@
                 body: JSON.stringify({ prompt: prompt })
             });
 
-            const data = await response.json();
-            responseDiv.innerHTML = data.response;
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder("utf-8");
+            let receivedLength = 0; // Received that many bytes at the moment
+            while(true) {
+                const {done, value} = await reader.read();
+                if (done) {
+                    break;
+                }
+                receivedLength += value.length;
+                const chunk = decoder.decode(value, {stream: true});
+                responseDiv.innerHTML += chunk;
+            }
         }
     </script>
 </body>
