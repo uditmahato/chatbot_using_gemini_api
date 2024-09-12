@@ -4,55 +4,193 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chatbot Interface</title>
-    <!-- Link to the external CSS file -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .navbar {
+            background-color: #007bff;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+        .chat-container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            height: auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .chat-container h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .response {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            min-height: 150px;
+            max-height: auto;
+            overflow-y: auto;
+            background-color: #f9f9f9;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        .message {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            max-width: 80%;
+            word-wrap: break-word;
+            display: inline-block;
+        }
+        .user-message {
+            background-color: #e1f5fe;
+            align-self: flex-start;
+            text-align: left;
+        }
+        .bot-message {
+            background-color: #f1f8e9;
+            align-self: flex-end;
+            text-align: right;
+            margin-left: auto;
+        }
+        .input_send {
+            display: flex;
+            align-items: center;
+        }
+        .input_send input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .input_send button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            margin-left: 10px;
+            transition: background-color 0.3s;
+        }
+        .input_send button:hover {
+            background-color: #0056b3;
+        }
+        .response.loading::after {
+            content: 'Loading...';
+            color: #007bff;
+        }
+        #response.response {
+            width: 100%;
+            padding: 2px;
+            height: auto;
+        }
+    </style>
 </head>
 <body>
 
     <div class="navbar">
         <span class="nav-title">Gem-Bot</span>
     </div>
- 
 
     <div class="chat-container">
         <h1>Chat with Bot</h1>
+        <div class="response" id="response" aria-live="polite"></div>
         <div class="input_send">
-            <input type="text" id="prompt" placeholder="Type your message here...">
+            <input type="text" id="prompt" placeholder="Type your prompt here..." aria-label="Type your message here">
             <button onclick="sendMessage()">Send</button>
         </div>
-        
-        <div class="response" id="response"></div>
     </div>
 
     <script>
-        async function sendMessage() {
-            const prompt = document.getElementById('prompt').value;
-            const responseDiv = document.getElementById('response');
-            responseDiv.innerHTML = '';  // Clear previous responses
+        
+        function stripHtmlTags(text) {
+    const div = document.createElement('div');
+    div.innerHTML = text;
+    return div.textContent || div.innerText || '';
+}
 
-            const response = await fetch('/chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ prompt: prompt })
-            });
+async function sendMessage() {
+    const prompt = document.getElementById('prompt').value.trim();
+    const responseDiv = document.getElementById('response');
 
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder("utf-8");
-            let receivedLength = 0; // Received that many bytes at the moment
-            while(true) {
-                const {done, value} = await reader.read();
-                if (done) {
-                    break;
-                }
-                receivedLength += value.length;
-                const chunk = decoder.decode(value, {stream: true});
-                responseDiv.innerHTML += chunk;
-            }
+    // Handle empty input
+    if (!prompt) {
+        return;
+    }
+
+    // Add user message to response
+    addMessageToResponse('You: ' + prompt, 'user-message');
+
+    responseDiv.classList.add('loading');
+
+    try {
+        const response = await fetch('/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ prompt: prompt })
+        });
+
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
         }
 
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+        let receivedLength = 0;
+        let chunks = [];
+
+        while(true) {
+            const {done, value} = await reader.read();
+            if (done) {
+                break;
+            }
+            receivedLength += value.length;
+            chunks.push(decoder.decode(value, {stream: true}));
+        }
+
+        // Combine all chunks into one string
+        const fullResponse = chunks.join('');
+
+        // Strip HTML tags from response
+        const cleanResponse = stripHtmlTags(fullResponse);
+
+        // Add bot response to response
+        addMessageToResponse('Bot: ' + cleanResponse, 'bot-message');
+    } catch (error) {
+        addMessageToResponse('An error occurred. Please try again.', 'bot-message');
+    } finally {
+        responseDiv.classList.remove('loading');
+    }
+}
+
+
+
+function addMessageToResponse(message, className) {
+    const messageElement = document.createElement('div');
+    messageElement.className = `message ${className}`;
+    messageElement.textContent = message; // Use textContent to avoid rendering HTML tags
+    const responseDiv = document.getElementById('response');
+    responseDiv.appendChild(messageElement);
+
+    // Scroll to bottom
+    responseDiv.scrollTop = responseDiv.scrollHeight;
+}
 
     </script>
 </body>
