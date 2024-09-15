@@ -5,15 +5,22 @@ import google.generativeai as genai
 app = Flask(__name__)
 
 # Fetch the API key from the environment variable
-GOOGLE_API_KEY = 'AIzaSyBi3fQCz0JRVvgpH0BOSOZS702nml5zUbE'
+GOOGLE_API_KEY = 'AIzaSyBCJm-K9HehIA30F4Gkc57gH3l8ck6XHT4'
 
 if not GOOGLE_API_KEY:
     raise ValueError("No API key found. Please set the GOOGLE_API_KEY environment variable.")
+
 # Initialize the API with the fetched key
 genai.configure(api_key=GOOGLE_API_KEY)
 
-# Load the model
-model = genai.GenerativeModel('gemini-1.0-pro-latest')
+
+try:
+   model = genai.GenerativeModel('tunedModels/datacaption-cmb7ktrqhnum')
+except:
+    print("Permission denied for fine-tuned model. Falling back to default model.")
+# Load the fine-tuned model
+
+#  model= genai.GenerativeModel('tunedModels/datacaption-cmb7ktrqhnum')
 
 
 def parse_response(text):
