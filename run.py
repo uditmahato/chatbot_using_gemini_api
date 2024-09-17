@@ -13,14 +13,13 @@ if not GOOGLE_API_KEY:
 # Initialize the API with the fetched key
 genai.configure(api_key=GOOGLE_API_KEY)
 
-
-try:
-   model = genai.GenerativeModel('tunedModels/datacaption-cmb7ktrqhnum')
-except:
-    print("Permission denied for fine-tuned model. Falling back to default model.")
+# try:
+#    model = genai.GenerativeModel('tunedModels/newsheadlinesmodel-vy1qa78eo9no')
+# except:
+#     print("Permission denied for fine-tuned model. Falling back to default model.")
 # Load the fine-tuned model
 
-#  model= genai.GenerativeModel('tunedModels/datacaption-cmb7ktrqhnum')
+model= genai.GenerativeModel('tunedModels/datacaption-cmb7ktrqhnum')
 
 
 def parse_response(text):

@@ -65,8 +65,8 @@
                     }
                     const chunk = decoder.decode(value, {stream: true});
                     fullResponse += chunk;
-                    // Update the bot message in real-time
-                    updateBotMessage(stripHtmlTags(fullResponse));
+                    // Update the bot message in real-time with chunked writing effect
+                    updateBotMessageChunked(stripHtmlTags(fullResponse));
                 }
             } catch (error) {
                 addMessageToResponse('An error occurred. Please try again.', 'bot-message');
@@ -75,7 +75,7 @@
             }
         }
 
-        function updateBotMessage(message) {
+        async function updateBotMessageChunked(message) {
             const responseDiv = document.getElementById('response');
             let botMessageElement = responseDiv.querySelector('.bot-message:last-child');
             
@@ -85,8 +85,16 @@
                 responseDiv.appendChild(botMessageElement);
             }
             
-            botMessageElement.textContent = 'Bot: ' + message;
-            scrollToBottom();
+            const words = message.split(' ');
+            let currentText = 'Bot: ';
+            botMessageElement.textContent = currentText;
+
+            for (let i = 0; i < words.length; i++) {
+                currentText += words[i] + ' ';
+                botMessageElement.textContent = currentText;
+                scrollToBottom();
+                await new Promise(resolve => setTimeout(resolve, 50)); // Adjust the delay as needed
+            }
         }
 
         function addMessageToResponse(message, className) {
