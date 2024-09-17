@@ -30,7 +30,6 @@
         async function sendMessage() {
             const promptInput = document.getElementById('prompt');
             const prompt = promptInput.value.trim();
-            const responseDiv = document.getElementById('response');
 
             if (!prompt) {
                 return;
@@ -38,8 +37,6 @@
 
             addMessageToResponse('You: ' + prompt, 'user-message');
             promptInput.value = ''; // Clear input after sending
-
-            responseDiv.classList.add('loading');
 
             try {
                 const response = await fetch('/chat', {
@@ -65,17 +62,15 @@
                     }
                     const chunk = decoder.decode(value, {stream: true});
                     fullResponse += chunk;
-                    // Update the bot message in real-time with chunked writing effect
-                    updateBotMessageChunked(stripHtmlTags(fullResponse));
+                    // Update the bot message in real-time with typewriter effect
+                    await updateBotMessageTypewriter(stripHtmlTags(fullResponse));
                 }
             } catch (error) {
                 addMessageToResponse('An error occurred. Please try again.', 'bot-message');
-            } finally {
-                responseDiv.classList.remove('loading');
             }
         }
 
-        async function updateBotMessageChunked(message) {
+        async function updateBotMessageTypewriter(message) {
             const responseDiv = document.getElementById('response');
             let botMessageElement = responseDiv.querySelector('.bot-message:last-child');
             
@@ -85,15 +80,14 @@
                 responseDiv.appendChild(botMessageElement);
             }
             
-            const words = message.split(' ');
-            let currentText = 'Bot: ';
-            botMessageElement.textContent = currentText;
-
-            for (let i = 0; i < words.length; i++) {
-                currentText += words[i] + ' ';
+            const prefix = 'Bot: ';
+            let currentText = botMessageElement.textContent || prefix;
+            
+            for (let i = currentText.length - prefix.length; i < message.length; i++) {
+                currentText += message[i];
                 botMessageElement.textContent = currentText;
                 scrollToBottom();
-                await new Promise(resolve => setTimeout(resolve, 50)); // Adjust the delay as needed
+                await new Promise(resolve => setTimeout(resolve, 20)); // Adjust the delay as needed
             }
         }
 
